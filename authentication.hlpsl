@@ -1,0 +1,65 @@
+%%% B -> A: {B,{s}_Kb-1}_Ka
+
+role role_DS(DS:agent,OCS:agent,Kds,Kocs:public_key,SND,RCV:channel(dy))
+played_by DS
+def=
+	local
+		State:nat,S:text
+	init
+		State := 0
+	transition
+		1. State=0 /\ RCV({OCS.{S'}_inv(Kocs)}_Kds)  =|>  
+
+                State':=1 
+                
+                %% A checks that B is the emitter of S
+                /\ request(DS,OCS,auth_1,S')
+end role
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+role role_OCS(OCS:agent,DS:agent,S:text,Kds,Kocs:public_key,SND,RCV:channel(dy))
+played_by OCS
+def=
+	local
+		State:nat
+	init
+		State := 0
+	transition
+		1. State=0 /\ RCV(start) =|> State':=1 /\ SND({OCS.{S}_inv(Kocs)}_Kds)
+
+                %% The emitter of the secret info tags it
+                /\ secret(S,sec_1,{DS,OCS}) 
+
+                %% B hopes that S will permit to authenticate him
+                /\ witness(OCS,DS,auth_1,S)
+end role
+
+role session(DS:agent,OCS:agent,S:text,Kds,Kocs:public_key)
+def=
+	local
+		SND2,RCV2,SND1,RCV1:channel(dy)
+	composition
+		role_OCS(OCS,DS,S,Kds,Kocs,SND2,RCV2) /\ role_DS(DS,OCS,Kds,Kocs,SND1,RCV1)
+end role
+
+role environment()
+def=
+	const
+		alice:agent,bob:agent,
+                ka,kb:public_key,
+                s1:text,
+                auth_1,sec_1:protocol_id
+
+	intruder_knowledge = {alice,bob,ka,kb}
+	composition
+		session(alice,bob,s1,ka,kb) 
+                /\ session(alice,bob,s1,ka,kb)
+end role
+
+goal
+	secrecy_of sec_1
+        authentication_on auth_1
+end goal
+
+environment()
