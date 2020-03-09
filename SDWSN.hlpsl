@@ -1,0 +1,45 @@
+role role_WS(WS,OCS: agent, Kab:symmetric_key, SND, RCV: channel(dy)) played_by WS
+def=
+  local State:nat,
+        Na: text
+  init State:= 0
+  transition
+	1. State = 0 /\ RCV(start)  =|> State' := 2 /\ Na':= new()/\ SND({Na'}_Kab) /\ secret(Na',data,{WS,OCS})
+end role
+
+role role_OCS(WS,OCS: agent, Kab:symmetric_key, SND, RCV: channel(dy)) played_by OCS
+def=
+  local State:nat,
+        Na: text
+   init State:= 1
+   transition
+	1. State = 1 /\ RCV({Na}_Kab) =|> State':=3 /\ SND(Na)
+end role
+
+role session (WS,OCS: agent,Kab:symmetric_key)
+def=
+  local SWS, SOCS, RWS, ROCS: channel (dy)
+  composition
+	role_WS(WS,OCS,Kab,SWS,RWS) /\ role_OCS(WS,OCS,Kab,SOCS,ROCS)
+end role
+
+role environment()
+def=
+  const a,b: agent,
+        kab:symmetric_key,
+        data: protocol_id
+
+  intruder_knowledge = {a,b}
+  composition
+	session(a,b,kab) 
+	
+end role
+
+goal
+  secrecy_of data
+end goal
+
+environment()
+
+
+
