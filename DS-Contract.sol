@@ -1,8 +1,18 @@
 pragma solidity >=0.6.22 <0.8.0;
 
-contract DS-Contract {
+contract DSContract {
 
-function addConsumer(address _consumer, string memory _operation, string memory _permission, uint _grantTime) public onlyPatient
+address payable public patient;
+mapping (address => mapping (string => subjectsAccessRights)) accessList;
+
+struct subjectsAccessRights { //The access rights for data users. It is created per each operation
+string operation; //like read, write
+string permission; //like allowed, denied
+uint grantTime; //the time that the permission is granted to the user
+bool isValue; //for duplicate check
+ }
+
+function addConsumer(address _consumer, string memory _operation, string memory _permission, uint _grantTime) public 
 { 
     if (accessList[_consumer][_operation].isValue) 
         revert(); //the data consumer and right already exists
@@ -14,7 +24,7 @@ function addConsumer(address _consumer, string memory _operation, string memory 
 } 
 
 
-function deleteConsumer(address _consumer, string memory _operation ) public onlyOwner
+function deleteConsumer(address _consumer, string memory _operation ) public 
 { 
     if(accessList[_consumer][_operation].isValue) 
         delete accessList[_consumer][_operation];
@@ -34,7 +44,7 @@ function getAccessRight(address _consumer, string memory _operation) public view
  return _permission;
 }  
 
-function updateAccessRights(address _consumer, string memory _operation,string memory _permission) public onlyOwner 
+function updateAccessRights(address _consumer, string memory _operation,string memory _permission) public  
 { 
     if (accessList[_consumer][_operation].isValue)
     { 
@@ -44,7 +54,7 @@ function updateAccessRights(address _consumer, string memory _operation,string m
         revert(); //if the data consumer doesn't exist, revert 
 }
 
- function deleteDS() public onlyPatient
+ function deleteDS() public 
  { 
     selfdestruct(patient); 
  }
